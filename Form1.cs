@@ -59,12 +59,13 @@ namespace ads
             double[] res = new double[count];
             double[] resSort = new double[count];
 
-            double y = 0;
+            double y = 0.0;
 
-            double x_ = 0;
-            double S_2 = 0;
-            double me_ = 0;
-            double R = 0;
+            double x_ = 0.0;
+            double S_2 = 0.0;
+            double me_ = 0.0;
+            double R = 0.0;
+            double D = 0.0;
 
             string str="";
 
@@ -114,18 +115,38 @@ namespace ads
                 str = str + System.Convert.ToString(resSort[n]) + "\n";
             }
 
+            double d1, d2, dmax = 0.0;
+            double T = 0;
             this.chart1.Series["Выборочная функция распределения"].Points.AddXY(resSort[0], 1/System.Convert.ToDouble(count));
             for (int n = 1; n < count; ++n)
             {
                 this.chart1.Series["Выборочная функция распределения"].Points.AddXY(resSort[n], n / System.Convert.ToDouble(count));
                 this.chart1.Series["Выборочная функция распределения"].Points.AddXY(resSort[n], (n + 1) / System.Convert.ToDouble(count));
+
+                if(resSort[n] <= 0)
+                {
+                    T = (0.5) * Math.Exp(lambda * resSort[n]);
+                }
+                else
+                {
+                    T = 1 - ((0.5) * Math.Exp((-1) * lambda * resSort[n]));
+                }
+                d1 = Math.Abs((n / System.Convert.ToDouble(count)) - T);
+                d2 = Math.Abs(((n + 1) / System.Convert.ToDouble(count)) - T);
+                dmax = Math.Max(d1, d2);
+
+                if (dmax >= D)
+                {
+                    D = dmax;
+                }
+
             }
 
             MessageBox.Show(str);
 
             MessageBox.Show("Матожидание = 0\n" + "Выборочное среднее = " + System.Convert.ToString(x_ / count) + "\n" + "Отклонение от матожидания = " + System.Convert.ToString((-1) * (x_ / count)) +
             "\n" + "Дисперсия = " + System.Convert.ToString(2 / ((lambda) * (lambda))) + "\n" + "Выборочная дисперсия = " + System.Convert.ToString(S_2) + "\n" + "Отклонение от дисперсии = " + System.Convert.ToString(Math.Abs((2 / ((lambda) * (lambda))) - S_2))
-            + "\n" + "Медиана = " + System.Convert.ToString(me_) + "\n" + "Размах = " + System.Convert.ToString(resSort[count - 1] - resSort[0]));
+            + "\n" + "Медиана = " + System.Convert.ToString(me_) + "\n" + "Размах = " + System.Convert.ToString(resSort[count - 1] - resSort[0]) + "\n" + "Мера расхождения = " + System.Convert.ToString(D));
 
 
         }
@@ -219,6 +240,11 @@ namespace ads
         private void button9_Click_1(object sender, EventArgs e)
         {
             chart1.ChartAreas[0].AxisY.Maximum += 2;
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            chart1.Series.Clear();
         }
     }
 }
