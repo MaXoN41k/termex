@@ -1,0 +1,422 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Numerics;
+namespace ads
+{
+    public partial class Form1 : Form
+    {
+        Random rnd = new Random();
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+        }
+        int Partition(double[] array, int start, int end)
+        {
+            int marker = start; // divides left and right subarrays 
+            for (int i = start; i < end; i++)
+            {
+                if (array[i] < array[end]) // array[end] is pivot 
+                {
+                    (array[marker], array[i]) = (array[i], array[marker]);
+                    marker += 1;
+                }
+            }
+            // put pivot(array[end]) between left and right subarrays 
+            (array[marker], array[end]) = (array[end], array[marker]);
+            return marker;
+        }
+        void Quicksort(double[] array, int start, int end)
+        {
+            if (start >= end)
+                return;
+            int pivot = Partition(array, start, end);
+            Quicksort(array, start, pivot - 1);
+            Quicksort(array, pivot + 1, end);
+        }
+
+        static int g = 7;
+        static double[] p = {0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+771.32342877765313, -176.61502916214059, 12.507343278686905,-0.13857109526572012,
+9.9843695780195716e-6, 1.5056327351493116e-7};
+        double MyGammaDouble(double z)
+        {
+            if (z < 0.5)
+                return Math.PI / (Math.Sin(Math.PI * z) * MyGammaDouble(1 - z));
+            z -= 1;
+            double x = p[0];
+            for (var i = 1; i < g + 2; i++)
+                x += p[i] / (z + i);
+            double t = z + g + 0.5;
+            return Math.Sqrt(2 * Math.PI) * (Math.Pow(t, z + 0.5)) * Math.Exp(-t) * x;
+        }
+        double Trapecion(double R0, int intervals)
+        {
+            if (R0 == 0.0)
+            {
+                return 0.0;
+            }
+            int n = 10000;
+            double step = (R0 / (n - 1));
+            double svo = System.Convert.ToDouble(intervals-1) / 2.0;
+            double ppau;
+            if (svo==0.0)
+            {
+                ppau = 1.0;
+            }
+            else
+            {
+                ppau = 0;
+            }
+            //MessageBox.Show(System.Convert.ToString(svo));
+            double res = (step / 2) * ((ppau ) + ((Math.Pow(R0, (svo - 1.0))) * (Math.Exp((-1) * (R0 / 2)))));
+            for (int count = 1; count < n; ++count)
+            {
+                res += step * ((Math.Pow(step * count, (svo - 1.0))) * (Math.Exp((-1) * ((step * count) / 2))));
+            }
+            return res* ((Math.Pow(0.5, svo)) / (MyGammaDouble(svo)));
+        }
+        private void CreateFunc(double lambda, int count)
+        {
+        //===================================================================================================================================инициализация и выбор сл вел 
+            chart1.Series.Add("Выборочная функция распределения"); 
+            chart1.Series["Выборочная функция распределения"].ChartType = 
+            System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line; 
+            chart1.Series["Выборочная функция распределения"].Color = Color.FromArgb(255, 255,0, 0); 
+            chart2.Series.Add("Гистограмма"); 
+            chart2.Series["Гистограмма"].ChartType = 
+            System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line; 
+            chart2.Series["Гистограмма"].Color = Color.FromArgb(255, 0, 255, 0); 
+            double[] res = new double[count]; 
+            double[] resSort = new double[count]; 
+            double y = 0.0; 
+            double x_ = 0.0; 
+            double S_2 = 0.0; 
+            double me_ = 0.0; 
+            double R = 0.0; 
+            double D = 0.0; 
+            int h = (int)(Math.Pow(count, (1.0 / 3))) + 1; 
+            string str=""; 
+            double x = System.Convert.ToDouble(rnd.NextDouble()); 
+            for (int n = 0; n < count; n++) 
+            { 
+                x = System.Convert.ToDouble(rnd.NextDouble()); 
+                if (x < 0.5) 
+                { 
+                    y = (Math.Log(2 * x)) / (lambda); 
+                } 
+                else if (x > 0.5) 
+                { 
+                    y = -((Math.Log(2 - (2 * x))) / (lambda)); 
+                } 
+                else if (x == 0.5)
+                {
+                    y = 0;
+                }
+                res[n] = y;
+                resSort[n] = y;
+                x_ += y;
+            } //выборка значений 
+
+            //============================================================================================подсчёт значений, сортировка и вывод
+            for (int n = 0; n < count; n++) //выборочная дисперсия 
+            {
+                S_2 += (res[n] - (x_ / count)) * (res[n] - (x_ / count));
+            }
+            S_2 = S_2 / count;
+            Quicksort(resSort, 0, count - 1);
+            if (count % 2 == 0) // медиана 
+            {
+                me_ = (resSort[(count - 1) / 2] + resSort[((count - 1) / 2) + 1]) / 2;
+            }
+            else
+            {
+                me_ = (resSort[(((count - 1) / 2))]);
+            }
+            for (int n = 0; n < count; ++n)// вывод значений 
+            {
+                str = str + System.Convert.ToString(resSort[n]) + "\n";
+            }
+
+            //============================================================================================================гистограмма 
+            double a; 
+            double b; 
+            if (resSort[0] < 0) 
+            { 
+                a = (double)((int)resSort[0] - 1); 
+            } 
+            else 
+            { 
+                a = (double)((int)resSort[0]); 
+            } 
+            if (resSort[count - 1] < 0) 
+            { 
+                b = (double)((int)resSort[count - 1]); 
+            } 
+            else 
+            { 
+                b = (double)((int)resSort[count - 1] + 1); 
+            } 
+            double step = (b - a) / h; 
+            int kk; 
+            int j = 0; 
+            for (int n = 0; n < h; ++n) 
+            { 
+                kk = 0; 
+                while ((resSort[j] > a + n * step && resSort[j] < a + (n + 1) * step) && j<count-1) 
+                { 
+                    kk++; 
+                    j++;
+                }
+                this.chart2.Series["Гистограмма"].Points.AddXY(a + n * step, 0);
+                this.chart2.Series["Гистограмма"].Points.AddXY(a + n * step, ((kk) / (count *step)));
+                this.chart2.Series["Гистограмма"].Points.AddXY(a + (n + 1) * step, ((kk) /(count * step)));
+                this.chart2.Series["Гистограмма"].Points.AddXY(a + (n + 1) * step, 0);
+            }
+
+            //===================================================================================================================выборочная функция распределения 
+            double d1, d2, dmax = 0.0; 
+            double T = 0; 
+            for (int n = 0; n < count; ++n) 
+            { 
+                this.chart1.Series["Выборочная функция распределения"].Points.AddXY(resSort[n], n / System.Convert.ToDouble(count)); 
+                this.chart1.Series["Выборочная функция распределения"].Points.AddXY(resSort[n], (n + 1) / System.Convert.ToDouble(count)); 
+                if(resSort[n] <= 0) 
+                { 
+                    T = (0.5) * Math.Exp(lambda * resSort[n]); 
+                } 
+                else 
+                { 
+                    T = 1 - ((0.5) * Math.Exp((-1) * lambda * resSort[n])); 
+                } 
+                d1 = Math.Abs((n / System.Convert.ToDouble(count)) - T); 
+                d2 = Math.Abs(((n + 1) / System.Convert.ToDouble(count)) - T); 
+                dmax = Math.Max(d1, d2); 
+                if (dmax >= D) 
+                { 
+                    D = dmax; 
+                } 
+            } 
+             //========================================== вывод 
+            MessageBox.Show(str); 
+            MessageBox.Show("Матожидание = 0\n" + "Выборочное среднее = " + 
+            System.Convert.ToString(x_ / count) + "\n" + "Отклонение от матожидания = " + 
+            System.Convert.ToString((-1) * (x_ / count)) + 
+             "\n" + "Дисперсия = " + System.Convert.ToString(2 / ((lambda) * (lambda))) + "\n" 
+            + "Выборочная дисперсия = " + System.Convert.ToString(S_2) + "\n" + "Отклонение от дисперсии = " + System.Convert.ToString(Math.Abs((2 / ((lambda) * (lambda))) - S_2)) 
+             + "\n" + "Медиана = " + System.Convert.ToString(me_) + "\n" + "Размах = " + 
+            System.Convert.ToString(resSort[count - 1] - resSort[0]) + "\n" + "Мера расхождения = " + 
+            System.Convert.ToString(D)); 
+ 
+            //========================================================================================================================================================================================================================================================= 
+        } 
+        bool Gypotize(int count, double lambda, double alpha, int intervals) 
+        { 
+            bool flag = false; 
+            double[] res = new double[count]; 
+            double[] resSort = new double[count]; 
+            string str = ""; 
+            double y = 0.0;
+            double val = 0;
+            double[] Granicy = new double[intervals - 1];
+            double t = 0.0;
+            int[] countIntervals = new int[intervals];
+            int j = 0;
+            double R0 = 0.0;
+            double p = (1.0 / System.Convert.ToDouble(intervals));
+            //Random rnd = new Random();
+            double x = System.Convert.ToDouble(rnd.NextDouble());
+            for (int n = 0; n < count; n++)
+            {
+                x = System.Convert.ToDouble(rnd.NextDouble());
+                if (x < 0.5)
+                {
+                    y = (Math.Log(2 * x)) / (lambda);
+                }
+                else if (x > 0.5)
+                {
+                    y = -((Math.Log(2 - (2 * x))) / (lambda));
+                }
+                else if (x == 0.5)
+                {
+                    y = 0;
+                }
+                res[n] = y;
+                resSort[n] = y;
+            }
+            Quicksort(resSort, 0, count - 1);
+            for (int n = 0; n < intervals - 1; ++n)
+            {
+                t = System.Convert.ToDouble(1 + n) / (intervals);
+                if (t < 0.5)
+                {
+                    Granicy[n] = (Math.Log(2 * t)) / (lambda);
+                }
+                else if (t > 0.5)
+                {
+                    Granicy[n] = -((Math.Log(2 - (2 * t))) / (lambda));
+                }
+                else if (t == 0.5)
+                {
+                    Granicy[n] = 0;
+                }
+            }
+            //MessageBox.Show(System.Convert.ToString(Math.Pow(0,(-1)*0.5)));
+            //for(int i=0; i < intervals - 1; ++i)
+            //{
+            //    MessageBox.Show(System.Convert.ToString(Granicy[i]));
+            //}
+
+            for (int n = 0; n < intervals - 1; ++n)
+            {
+                countIntervals[n] = 0;
+                while ((resSort[j] < Granicy[n]) && (j < count - 1))
+                {
+                    countIntervals[n]++;
+                    j++;
+                }
+            }
+            countIntervals[intervals - 1] = count - j;
+            //for (int i = 0; i < intervals; ++i)
+            //{
+            //    MessageBox.Show(System.Convert.ToString(countIntervals[i]));
+            //}
+            for (int c = 0; c < intervals; ++c)
+            {
+                R0 += ((countIntervals[c] - count * p) * (countIntervals[c] - count * p)) /(count * p);
+            }
+            val = Trapecion(R0, intervals);
+            if (val <= (1 - alpha))
+            {
+                flag = true;
+            }
+            else
+            {
+                flag = false;
+            }
+            return flag;
+        }
+        private void CreateGraph(double lambda) //построение функции распределения 
+        {
+            double h = 0.1;
+            int right = 100;
+            chart1.Series.Clear();
+            chart2.Series.Clear();
+            chart1.Series.Add("Функция распределения");
+            chart1.Series["Функция распределения"].ChartType =
+            System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            chart1.Series["Функция распределения"].Color = Color.FromArgb(255, 0, 0, 255);
+            for (int count = -right; count < right; ++count)
+            {
+                double t = count * h;
+                if (t <= 0)
+                {
+                    this.chart1.Series["Функция распределения"].Points.AddXY(t, (0.5) *
+                    Math.Exp(lambda * t));
+                }
+                else
+                {
+                    this.chart1.Series["Функция распределения"].Points.AddXY(t, 1 - ((0.5) *
+                    Math.Exp((-1) * lambda * t)));
+                }
+            }
+        }
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+        }
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+        }
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            double lambda = System.Convert.ToDouble(this.textBox1.Text);
+            int count = System.Convert.ToInt32(this.textBox2.Text);
+            CreateGraph(lambda);
+            CreateFunc(lambda, count);
+            chart1.ChartAreas[0].AxisX.Interval = 1;
+        }
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisX.Minimum -= 2;
+        }
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisX.Minimum += 2;
+        }
+        private void button4_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisX.Maximum -= 2;
+        }
+        private void button5_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisX.Maximum += 2;
+        }
+        private void button6_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisY.Minimum -= 2;
+        }
+        private void button7_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisY.Minimum += 2;
+        }
+        private void button8_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisY.Maximum -= 2;
+        }
+        private void button9_Click_1(object sender, EventArgs e)
+        {
+            chart1.ChartAreas[0].AxisY.Maximum += 2;
+        }
+        private void button10_Click(object sender, EventArgs e)
+        {
+            chart1.Series.Clear();
+        }
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+        }
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+        }
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+        }
+        private void button11_Click(object sender, EventArgs e)
+        {
+            double lambda = System.Convert.ToDouble(this.textBox1.Text);
+            int count = System.Convert.ToInt32(this.textBox2.Text);
+            double alpha = System.Convert.ToDouble(this.textBox4.Text);
+            int intervals = System.Convert.ToInt32(this.textBox3.Text);
+            int k = System.Convert.ToInt32(this.textBox5.Text);
+
+            bool flag = false;
+            int countTrue = 0;
+            int countFalse = 0;
+            for (int n = 0; n < k; ++n)
+            {
+                flag = Gypotize(count, lambda, alpha, intervals);
+                if (flag == true)
+                {
+                    countTrue++;
+                }
+                else if (flag == false)
+                {
+                    countFalse++;
+                }
+            }
+            chart1.ChartAreas[0].AxisX.Interval = 1;
+            MessageBox.Show("Гипотеза была принята " + System.Convert.ToString(countTrue) + "раз\n"+ "Гипотеза была отвергнута " + System.Convert.ToString(countFalse) + " раз"); 
+        }
+    }
+}
